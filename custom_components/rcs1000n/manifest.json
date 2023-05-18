@@ -1,0 +1,10 @@
+{
+  "domain": "rcs1000n",
+  "name": "RCS1000N RF Socket Support for HASS",
+  "documentation": "https://github.com/kernelpanic0x/rcs1000n",
+  "issue_tracker": "https://github.com/kernelpanic0x/rcs1000n/issues",
+  "dependencies": [],
+  "config_flow": true,
+  "codeowners": ["@kernelpanic0x"],
+  "requirements": ["RPi.GPIO==0.7.1"]
+}
