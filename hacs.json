@@ -1,6 +1,6 @@
 {
-  "name": "Custom Templates",
-  "render_readme": true,
-  "zip_release": true,
-  "filename": "custom_templates.zip"
+  "name": "RCS1000N",
+  "render_readme": false,
+  "zip_release": false,
+  "filename": ""
 }
