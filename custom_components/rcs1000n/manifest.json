@@ -1,0 +1,13 @@
+{
+  "domain": "rcs1000n",
+  "name": "RCS1000N",
+  "documentation": "https://your-custom-component-documentation-url",
+  "dependencies": [],
+  "codeowners": [],
+  "requirements": [],
+  "config_flow": false,
+  "translations": false,
+  "mqtt": false,
+  "version": "1.0.0"
+}
+
