@@ -2,10 +2,6 @@
   "name": "RCS1000N",
   "render_readme": false,
   "zip_release": false,
-  "topics": [
-    "home-assistant",
-    "custom-component"
-  ],
   "issue_tracker": "https://github.com/kernelPanic0x/rcs1000n/issues"
 }
 
