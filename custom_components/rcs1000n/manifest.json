@@ -4,7 +4,9 @@
   "documentation": "https://your-custom-component-documentation-url",
   "dependencies": [],
   "codeowners": [],
-  "requirements": [],
+  "requirements": [
+    "RPi.GPIO==0.7.1"
+  ],
   "config_flow": false,
   "translations": false,
   "mqtt": false,

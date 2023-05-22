@@ -58,7 +58,7 @@ class RCS1000NSwitch(SwitchEntity):
         self._socket_config = socket_config
         self._state = False
 
-        self._send_thread = SendThread(gpio, repeats)
+        self._send_thread = SendThread(gpio, repeats, socket_config[CONF_HOME_CODE], socket_config[CONF_PLUG_CODE])
         self._send_thread.start()
 
     @property
