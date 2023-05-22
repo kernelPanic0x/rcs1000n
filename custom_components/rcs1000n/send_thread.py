@@ -21,6 +21,7 @@ class SendThread(threading.Thread):
         while True:
             try:
                 item = self._queue.get()[1]
+                _LOGGER.info(f"Transmitting {item.get_state()} to socket {self._home_code}-{self._plug_code}")
                 self._rcswitch.send_tri_state(self._rcswitch.get_code_word_d(self._home_code, self._plug_code, item.get_state()))
             except queue.Empty:
                 pass

@@ -88,12 +88,12 @@ class RCSwitch:
 
 
     def transmit(self, n_high_pulses, n_low_pulses):
-        for i in range(n_high_pulses):
+        for _ in range(n_high_pulses):
             if gpio_library:
                 GPIO.output(self._transmitter_pin, GPIO.HIGH)
             time.sleep(self._pulse_length / 1000000)
 
-        for i in range(n_low_pulses):
+        for _ in range(n_low_pulses):
             if gpio_library:
                 GPIO.output(self._transmitter_pin, GPIO.LOW)
             time.sleep(self._pulse_length / 1000000)
