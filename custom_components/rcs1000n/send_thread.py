@@ -15,7 +15,7 @@ class SendThread(threading.Thread):
         self._gpio = gpio
         self._queue = queue.PriorityQueue()
 
-        self._rcswitch = RCSwitch(gpio, repeats)
+        self._rcswitch = RCSwitch(gpio)
 
     def run(self):
         while True:

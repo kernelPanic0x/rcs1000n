@@ -52,23 +52,26 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 class RCS1000NSwitch(SwitchEntity):
     """Representation of a RCS1000N switch."""
 
-    def __init__(self, gpio, repeats, socket_config):
+    def __init__(self, gpio, repeats, socket_config, resend_interval=60):
         """Initialize the switch."""
         self._lock = threading.Lock()
         self._gpio = gpio
         self._repeats = repeats
         self._socket_config = socket_config
         self._state = False
+        self._resend_interval = resend_interval  # Interval for resending state
 
         self._name = socket_config[CONF_NAME]
         self._home_code = socket_config[CONF_HOME_CODE]
         self._plug_code = socket_config[CONF_PLUG_CODE]
-
-        # Generate unique_id from home_code and plug_code
         self._attr_unique_id = f"{self._home_code}_{self._plug_code}_{self._name}"
 
         self._send_thread = SendThread(gpio, repeats, socket_config[CONF_HOME_CODE], socket_config[CONF_PLUG_CODE])
+        self._send_thread.daemon = True
         self._send_thread.start()
+
+        # Start the resend_state function
+        self.resend_state()
 
     @property
     def name(self):
@@ -100,4 +103,14 @@ class RCS1000NSwitch(SwitchEntity):
         with self._lock:
             self._state = False
         self._send_thread.add_task(self)
+
+    def resend_state(self):
+        """Resend the current state of the switch and schedule the next resend."""
+        _LOGGER.info("Resending state of RCS1000N switch: %s", self.name)
+        self._send_thread.add_task(self)
+
+        # Schedule the next resend
+        timer = threading.Timer(self._resend_interval, self.resend_state)
+        timer.daemon = True
+        timer.start()
 

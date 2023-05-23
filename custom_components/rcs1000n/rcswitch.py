@@ -14,9 +14,9 @@ except:
     pass
 
 class RCSwitch:
-    def __init__(self, transmitter_pin, repeats):
+    def __init__(self, transmitter_pin):
         self._transmitter_pin = transmitter_pin
-        self._repeats = repeats
+        self._repeats = 5
         self._pulse_length = 300
 
         # setup gpio
