@@ -1,4 +1,7 @@
 import time
+import logging
+
+_LOGGER = logging.getLogger(__name__)
 
 gpio_library = None
 
@@ -7,6 +10,7 @@ try:
     import RPi.GPIO as GPIO
     gpio_library = "RPi.GPIO"
 except:
+    _LOGGER.warn("No RPi.GPIO available. Using dummy mode!")
     pass
 
 class RCSwitch:
@@ -22,52 +26,31 @@ class RCSwitch:
             GPIO.output(transmitter_pin, GPIO.LOW)
 
     def get_code_word_d(self, s_group, n_channel_code, b_status):
-        n_return_pos = 0
-        s_return = [''] * 13
+        if not all(ch in '01' for ch in n_channel_code) or len(n_channel_code) > 5:
+            raise ValueError("n_channel_code should be a 5-bit binary string")
 
-        if n_channel_code < 1 or n_channel_code > 31:
-            s_return[0] = ''
-            return s_return
+        if not all(ch in '01' for ch in s_group) or len(s_group) != 5:
+            raise ValueError("s_group should be a 5-bit binary string")
 
-        for i in range(5):
-            if s_group[i] == '0':
-                s_return[n_return_pos] = 'F'
-            elif s_group[i] == '1':
-                s_return[n_return_pos] = '0'
-            else:
-                s_return[0] = ''
-                return s_return
-            n_return_pos += 1
+        group_code = ''.join('F' if ch == '0' else '0' for ch in s_group)
 
-        str_bin = bin(n_channel_code)[2:].zfill(5)  # Convert to binary with leading zeros
-        for i in range(len(str_bin)):
-            if str_bin[i] == '0':
-                s_return[n_return_pos] = 'F'
-            elif str_bin[i] == '1':
-                s_return[n_return_pos] = '0'
-            n_return_pos += 1
+        channel_code = ''.join('F' if ch == '0' else '0' for ch in n_channel_code)
 
-        if b_status:
-            s_return[n_return_pos] = '0'
-            s_return[n_return_pos + 1] = 'F'
-        else:
-            s_return[n_return_pos] = 'F'
-            s_return[n_return_pos + 1] = '0'
+        status_code = '0F' if b_status else 'F0'
 
-        s_return[n_return_pos + 2] = ''
-        return s_return
+        return group_code + channel_code + status_code + '\0'
+
 
     def send_tri_state(self, s_code_word):
-        for n_repeat in range(self._repeats):
-            i = 0
-            while s_code_word[i] != '':
-                if s_code_word[i] == '0':
+        _LOGGER.debug(f"Code: {s_code_word}")
+        for _ in range(self._repeats):
+            for c in s_code_word:
+                if c == '0':
                     self.send_t0()
-                elif s_code_word[i] == 'F':
+                elif c == 'F':
                     self.send_tf()
-                elif s_code_word[i] == '1':
+                elif c == '1':
                     self.send_t1()
-                i += 1
             self.send_sync()
 
     def send_t0(self):
