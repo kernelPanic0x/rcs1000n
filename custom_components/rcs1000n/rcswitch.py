@@ -16,7 +16,7 @@ except:
 class RCSwitch:
     def __init__(self, transmitter_pin):
         self._transmitter_pin = transmitter_pin
-        self._repeats = 5
+        self._repeats = 10
         self._pulse_length = 300
 
         # setup gpio
@@ -26,7 +26,7 @@ class RCSwitch:
             GPIO.output(transmitter_pin, GPIO.LOW)
 
     def get_code_word_d(self, s_group, n_channel_code, b_status):
-        if not all(ch in '01' for ch in n_channel_code) or len(n_channel_code) > 5:
+        if not all(ch in '01' for ch in n_channel_code) or len(n_channel_code) != 5:
             raise ValueError("n_channel_code should be a 5-bit binary string")
 
         if not all(ch in '01' for ch in s_group) or len(s_group) != 5:
@@ -38,11 +38,11 @@ class RCSwitch:
 
         status_code = '0F' if b_status else 'F0'
 
-        return group_code + channel_code + status_code + '\0'
+        return group_code + channel_code + status_code
 
 
     def send_tri_state(self, s_code_word):
-        _LOGGER.debug(f"Code: {s_code_word}")
+        _LOGGER.info(f"Code: {s_code_word}")
         for _ in range(self._repeats):
             for c in s_code_word:
                 if c == '0':
@@ -74,10 +74,15 @@ class RCSwitch:
         for _ in range(n_high_pulses):
             if gpio_library:
                 GPIO.output(self._transmitter_pin, GPIO.HIGH)
-            time.sleep(self._pulse_length / 1000000)
+            self._sleep(self._pulse_length / 1000000)
 
         for _ in range(n_low_pulses):
             if gpio_library:
                 GPIO.output(self._transmitter_pin, GPIO.LOW)
-            time.sleep(self._pulse_length / 1000000)
+            self._sleep(self._pulse_length / 1000000)
 
+    def _sleep(self, delay):      
+        _delay = delay / 100
+        end = time.time() + delay - _delay
+        while time.time() < end:
+            time.sleep(_delay)

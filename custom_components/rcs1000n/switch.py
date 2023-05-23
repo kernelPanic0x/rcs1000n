@@ -20,6 +20,8 @@ CONF_PLUG_CODE = 'plug_code'
 CONF_NAME = 'name'
 CONF_UNIQUE_ID = 'unique_id'
 
+
+
 # Update SOCKET_SCHEMA to use binary_code_validator for CONF_HOME_CODE and CONF_PLUG_CODE
 SOCKET_SCHEMA = vol.Schema(
     {
@@ -43,8 +45,12 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     gpio = config.get(CONF_GPIO)
     repeats = config.get(CONF_REPEATS)
     socket_configs = config.get(CONF_SOCKETS)
-
-    switches = [RCS1000NSwitch(gpio, repeats, socket_config) for socket_config in socket_configs]
+    
+    send_thread = SendThread(gpio, repeats)
+    send_thread.daemon = True
+    send_thread.start()
+    
+    switches = [RCS1000NSwitch(send_thread, gpio, repeats, socket_config) for socket_config in socket_configs]
 
     add_entities(switches)
 
@@ -52,9 +58,10 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 class RCS1000NSwitch(SwitchEntity):
     """Representation of a RCS1000N switch."""
 
-    def __init__(self, gpio, repeats, socket_config, resend_interval=60):
+    def __init__(self, send_thread, gpio, repeats, socket_config, resend_interval=60):
         """Initialize the switch."""
         self._lock = threading.Lock()
+        self._send_thread = send_thread
         self._gpio = gpio
         self._repeats = repeats
         self._socket_config = socket_config
@@ -65,10 +72,6 @@ class RCS1000NSwitch(SwitchEntity):
         self._home_code = socket_config[CONF_HOME_CODE]
         self._plug_code = socket_config[CONF_PLUG_CODE]
         self._attr_unique_id = f"{self._home_code}_{self._plug_code}_{self._name}"
-
-        self._send_thread = SendThread(gpio, repeats, socket_config[CONF_HOME_CODE], socket_config[CONF_PLUG_CODE])
-        self._send_thread.daemon = True
-        self._send_thread.start()
 
         # Start the resend_state function
         self.resend_state()
@@ -87,6 +90,12 @@ class RCS1000NSwitch(SwitchEntity):
     def get_state(self):
         with self._lock:
             return self._state
+
+    def get_home_code(self):
+        return self._home_code
+
+    def get_plug_code(self):
+        return self._plug_code
 
     def turn_on(self, **kwargs):
         """Turn the switch on."""
