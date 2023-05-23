@@ -9,6 +9,12 @@ from .send_thread import SendThread
 
 _LOGGER = logging.getLogger(__name__)
 
+def binary_code_validator(code):
+    """Validate that input is a binary string of length 5."""
+    if not isinstance(code, str) or len(code) != 5 or any(c not in ['0', '1'] for c in code):
+        raise vol.Invalid("The code must be a 5-character string containing only 0s and 1s")
+    return code
+
 # Constants
 DOMAIN = 'rcs1000n'
 
@@ -20,11 +26,11 @@ CONF_PLUG_CODE = 'plug_code'
 CONF_NAME = 'name'
 CONF_UNIQUE_ID = 'unique_id'
 
-# Validate the configuration
+# Update SOCKET_SCHEMA to use binary_code_validator for CONF_HOME_CODE and CONF_PLUG_CODE
 SOCKET_SCHEMA = vol.Schema(
     {
-        vol.Required(CONF_HOME_CODE): cv.string,
-        vol.Required(CONF_PLUG_CODE): cv.string,
+        vol.Required(CONF_HOME_CODE): binary_code_validator,
+        vol.Required(CONF_PLUG_CODE): binary_code_validator,
         vol.Required(CONF_NAME): cv.string,
         vol.Required(CONF_UNIQUE_ID): cv.string,
     }
