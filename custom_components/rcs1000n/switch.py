@@ -1,9 +1,14 @@
+"""
+switch.py
+Setup for the custom switch component (RF 433MHz socket remote control)
+"""
+
 import logging
+import threading
 from homeassistant.const import CONF_SWITCHES
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
 from homeassistant.components.switch import PLATFORM_SCHEMA, SwitchEntity
-import threading
 
 from .send_thread import SendThread
 
@@ -19,8 +24,6 @@ CONF_HOME_CODE = 'home_code'
 CONF_PLUG_CODE = 'plug_code'
 CONF_NAME = 'name'
 CONF_UNIQUE_ID = 'unique_id'
-
-
 
 # Update SOCKET_SCHEMA to use binary_code_validator for CONF_HOME_CODE and CONF_PLUG_CODE
 SOCKET_SCHEMA = vol.Schema(
@@ -40,17 +43,21 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     }
 )
 
+
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up the RCS1000N switch."""
     gpio = config.get(CONF_GPIO)
     repeats = config.get(CONF_REPEATS)
     socket_configs = config.get(CONF_SOCKETS)
-    
+
     send_thread = SendThread(gpio, repeats)
     send_thread.daemon = True
     send_thread.start()
-    
-    switches = [RCS1000NSwitch(send_thread, gpio, repeats, socket_config) for socket_config in socket_configs]
+
+    switches = [
+        RCS1000NSwitch(send_thread, gpio, repeats, socket_config)
+        for socket_config in socket_configs
+    ]
 
     add_entities(switches)
 
@@ -60,18 +67,21 @@ class RCS1000NSwitch(SwitchEntity):
 
     def __init__(self, send_thread, gpio, repeats, socket_config, resend_interval=60):
         """Initialize the switch."""
+        super().__init__()
+
         self._lock = threading.Lock()
         self._send_thread = send_thread
         self._gpio = gpio
         self._repeats = repeats
         self._socket_config = socket_config
-        self._state = False
         self._resend_interval = resend_interval  # Interval for resending state
 
         self._name = socket_config[CONF_NAME]
         self._home_code = socket_config[CONF_HOME_CODE]
         self._plug_code = socket_config[CONF_PLUG_CODE]
         self._attr_unique_id = f"{self._home_code}_{self._plug_code}_{self._name}"
+
+        self._state = False
 
         # Start the resend_state function
         self.resend_state()
@@ -91,15 +101,8 @@ class RCS1000NSwitch(SwitchEntity):
         with self._lock:
             return self._state
 
-    def get_home_code(self):
-        return self._home_code
-
-    def get_plug_code(self):
-        return self._plug_code
-
     def turn_on(self, **kwargs):
         """Turn the switch on."""
-        # Implement your code here to control the switch and turn it on
         _LOGGER.info("Turning on RCS1000N switch: %s", self.name)
         with self._lock:
             self._state = True
@@ -107,11 +110,10 @@ class RCS1000NSwitch(SwitchEntity):
 
     def turn_off(self, **kwargs):
         """Turn the switch off."""
-        # Implement your code here to control the switch and turn it off
         _LOGGER.info("Turning off RCS1000N switch: %s", self.name)
         with self._lock:
             self._state = False
-        self._send_thread.add_task(self)
+            self._send_thread.add_task(self)
 
     def resend_state(self):
         """Resend the current state of the switch and schedule the next resend."""
